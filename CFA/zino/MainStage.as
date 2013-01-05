@@ -5,12 +5,13 @@
 	import flash.events.MouseEvent;
 	import flash.net.*;
 	import flash.events.Event;
+	import flash.utils.ByteArray;
 	
 	public class MainStage extends Sprite
 	{
 		private var _pattern:Array = [[0x0000ff,0x00ff00], [0x00ff00,0xff0000]];
 		private var _bits:Array = [[0,8], [8,16]];
-		private var _rect:Rectangle = new Rectangle(0,0,512,384);
+		private var _rect:Rectangle = new Rectangle(0,0,stage.stageWidth,stage.stageHeight);
 		private var _file:FileReference;
 		private var _pt:Bitmap;
 		private var _bt:Bitmap;
@@ -42,15 +43,25 @@
 			//pt.scaleX = pt.scaleY = 4;
 			addChild(new Bitmap(pt));*/
 			
-			var btn:Sprite = new Sprite();
-			btn.graphics.beginFill(0x0099cc);
-			btn.graphics.drawRoundRect(0,0,20,20,5,5);
-			btn.graphics.endFill();
-			addChild(btn);
-			btn.x = 520;
-			btn.y = 370;
-			btn.buttonMode = true;
-			btn.addEventListener(MouseEvent.CLICK, demosicing);
+			var btn1:Sprite = new Sprite();
+			btn1.graphics.beginFill(0xff66cc);
+			btn1.graphics.drawRoundRect(0,0,20,20,5,5);
+			btn1.graphics.endFill();
+			addChild(btn1);
+			btn1.x = 520;
+			btn1.y = 340;
+			btn1.buttonMode = true;
+			btn1.addEventListener(MouseEvent.CLICK, mosicing);
+
+			var btn2:Sprite = new Sprite();
+			btn2.graphics.beginFill(0x0099cc);
+			btn2.graphics.drawRoundRect(0,0,20,20,5,5);
+			btn2.graphics.endFill();
+			addChild(btn2);
+			btn2.x = 520;
+			btn2.y = 370;
+			btn2.buttonMode = true;
+			btn2.addEventListener(MouseEvent.CLICK, demosicing);
 		}
 		
 		private function getimg(e:Event):void
@@ -72,22 +83,44 @@
 		{
 			var loader:LoaderInfo = LoaderInfo(e.target);
 			var bp:Bitmap = loader.content as Bitmap;
-			var bd:BitmapData = bp.bitmapData;
-			var pt:BitmapData = new BitmapData(_rect.width,_rect.height,false);
+			_rect.width = bp.width;
+			_rect.height = bp.height;
+			
+			var pt:BitmapData = bp.bitmapData.clone();
 			_pt = new Bitmap(pt);
-			var bt:BitmapData = new BitmapData(_rect.width,_rect.height,false);
+			var bt:BitmapData = new BitmapData(_rect.width,_rect.height,false,0);
 			_bt = new Bitmap(bt);
+			addChildAt(_pt,0);
+		}
+		
+		private function mosicing(e:MouseEvent):void
+		{
 			var len:int = _pattern.length;
 			for (var i:int=0; i<_rect.height; i++)
 			{
 				for (var j:int=0; j<_rect.width; j++)
 				{
 					var c:uint = _pattern[i%len][j%len];
-					var a:uint = bd.getPixel(j,i)&c;
+					var a:uint = _pt.bitmapData.getPixel(j,i)&c;
 					_pt.bitmapData.setPixel(j,i,a);
 				}
 			}
-			addChild(_pt);
+			removeChild(e.currentTarget as DisplayObject);
+			
+			var byts:ByteArray = new ByteArray();
+			byts.writeUnsignedInt(0x4d4d002a);
+			byts.writeUnsignedInt(0x8);
+			byts.writeShort(0x14);
+			//IFD
+			byts.writeUnsignedInt(0x010e0002);
+			byts.writeUnsignedInt(0xe);
+			byts.writeUnsignedInt(0);
+			byts.writeUnsignedInt(0x01000004);
+			byts.writeUnsignedInt(0x1);
+			byts.writeUnsignedInt(_rect.width);
+			byts.writeUnsignedInt(0x01010004);
+			byts.writeUnsignedInt(0x1);
+			byts.writeUnsignedInt(_rect.height);
 		}
 		
 		private function demosicing(e:MouseEvent):void
@@ -103,6 +136,7 @@
 			}
 			removeChild(_pt);
 			addChild(_bt);
+			removeChild(e.currentTarget as DisplayObject);
 		}
 		
 		private function calculate(x:Number,y:Number):uint
