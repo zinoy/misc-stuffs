@@ -5,11 +5,12 @@
 	import flash.events.MouseEvent;
 	import flash.net.*;
 	import flash.events.Event;
-	import flash.utils.ByteArray;
+	import flash.utils.*;
 	
 	public class MainStage extends Sprite
 	{
-		private var _pattern:Array = [[0x0000ff,0x00ff00], [0x00ff00,0xff0000]];
+		//private var _pattern:Array = [[0x0000ff,0x00ff00], [0x00ff00,0xff0000]];
+		private var _pattern:Array = [[0xff0000,0x00ff00], [0x00ff00,0x0000ff]];//for Cannon EOS
 		private var _bits:Array = [[0,8], [8,16]];
 		private var _rect:Rectangle = new Rectangle(0,0,stage.stageWidth,stage.stageHeight);
 		private var _file:FileReference;
@@ -96,6 +97,95 @@
 		private function mosicing(e:MouseEvent):void
 		{
 			var len:int = _pattern.length;
+			var d:ByteArray = new ByteArray();
+			d.endian = Endian.LITTLE_ENDIAN;
+			d.writeShort(0x4949)
+			d.writeShort(0x002a);
+			d.writeUnsignedInt(0x8);
+			d.writeShort(0xe);//Number of Interoperability
+			
+			d.writeShort(0xfe);
+			d.writeShort(0x4);
+			d.writeUnsignedInt(0x1);
+			d.writeUnsignedInt(0);
+			
+			d.writeShort(0x100);
+			d.writeShort(0x3);
+			d.writeUnsignedInt(0x1);
+			d.writeUnsignedInt(uint(_rect.width));
+			
+			d.writeShort(0x101)
+			d.writeShort(0x3);
+			d.writeUnsignedInt(0x1);
+			d.writeUnsignedInt(uint(_rect.height));
+			
+			d.writeShort(0x102)
+			d.writeShort(0x3);
+			d.writeUnsignedInt(0x3);
+			d.writeUnsignedInt(0xb6);//BitsPerSample
+
+			d.writeShort(0x103)
+			d.writeShort(0x3);
+			d.writeUnsignedInt(0x1);
+			d.writeUnsignedInt(0x1);
+
+			d.writeShort(0x106)
+			d.writeShort(0x3);
+			d.writeUnsignedInt(0x1);
+			d.writeUnsignedInt(0x2);
+
+			d.writeShort(0x111)
+			d.writeShort(0x4);
+			d.writeUnsignedInt(0x1);
+			d.writeUnsignedInt(0xcc);//StripOffsets
+
+			d.writeShort(0x115)
+			d.writeShort(0x3);
+			d.writeUnsignedInt(0x1);
+			d.writeUnsignedInt(0x3);
+
+			d.writeShort(0x116)
+			d.writeShort(0x3);
+			d.writeUnsignedInt(0x1);
+			d.writeUnsignedInt(uint(_rect.height));//RowsPerStrip
+
+			d.writeShort(0x117)
+			d.writeShort(0x4);
+			d.writeUnsignedInt(0x1);
+			d.writeUnsignedInt(uint(_rect.width * _rect.height * 3));
+
+			d.writeShort(0x11a)
+			d.writeShort(0x5);
+			d.writeUnsignedInt(0x1);
+			d.writeUnsignedInt(0xbc);//XResolution
+
+			d.writeShort(0x11b)
+			d.writeShort(0x5);
+			d.writeUnsignedInt(0x1);
+			d.writeUnsignedInt(0xc4);//YResolution
+
+			d.writeShort(0x128)
+			d.writeShort(0x3);
+			d.writeUnsignedInt(0x1);
+			d.writeUnsignedInt(0x2);
+			
+			d.writeShort(0x8769)
+			d.writeShort(0x4);
+			d.writeUnsignedInt(0x1);
+			d.writeUnsignedInt(0x5eeccc);//Exif IFD Pointer
+
+			d.writeUnsignedInt(0);
+			
+			d.writeShort(0x8);
+			d.writeShort(0x8);
+			d.writeShort(0x8);
+			
+			d.writeUnsignedInt(72);
+			d.writeUnsignedInt(1);
+
+			d.writeUnsignedInt(72);
+			d.writeUnsignedInt(1);
+			
 			for (var i:int=0; i<_rect.height; i++)
 			{
 				for (var j:int=0; j<_rect.width; j++)
@@ -103,26 +193,34 @@
 					var c:uint = _pattern[i%len][j%len];
 					var a:uint = _pt.bitmapData.getPixel(j,i)&c;
 					_pt.bitmapData.setPixel(j,i,a);
+					d.writeByte(a>>16);
+					d.writeByte(a>>8);
+					d.writeByte(a);
 				}
 			}
 			removeChild(e.currentTarget as DisplayObject);
 			
-			var byts:ByteArray = new ByteArray();
-			byts.writeUnsignedInt(0x4d4d002a);
-			byts.writeUnsignedInt(0x8);
-			byts.writeShort(0x14);
-			//IFD
-			byts.writeUnsignedInt(0x010e0002);
-			byts.writeUnsignedInt(0xe);
-			byts.writeUnsignedInt(0);
-			byts.writeUnsignedInt(0x01000004);
-			byts.writeUnsignedInt(0x1);
-			byts.writeUnsignedInt(_rect.width);
-			byts.writeUnsignedInt(0x01010004);
-			byts.writeUnsignedInt(0x1);
-			byts.writeUnsignedInt(_rect.height);
+			d.writeShort(0x1)
+			
+			d.writeShort(0x9000)
+			d.writeShort(0x7);
+			d.writeUnsignedInt(0x4);
+			d.writeMultiByte("0221","gb2312");
+			
+			d.writeUnsignedInt(0);
+			
+			trace((d.length-1).toString(16));
+			
+			var fs:FileReference = new FileReference();
+			fs.addEventListener(Event.COMPLETE,saved);
+			fs.save(d,".tif");
 		}
 		
+		private function saved(e:Event):void
+		{
+			trace("Saved!");
+		}
+
 		private function demosicing(e:MouseEvent):void
 		{
 			for (var i:int=0; i<_rect.height; i++)
