@@ -44,14 +44,14 @@ package zino.file
             return null;
         }
 
-		/**
-		 * Get binary to write to file.
-		 * @param endian Changes or reads the byte order for the data; either Endian.BIG_ENDIAN or Endian.LITTLE_ENDIAN.
-		 * @param offset Offset before this IFD block.
-		 * @param next Offset of the next IFD block (if exist).
-		 * @return 
-		 * 
-		 */
+        /**
+         * Get binary to write to file.
+         * @param endian Changes or reads the byte order for the data; either Endian.BIG_ENDIAN or Endian.LITTLE_ENDIAN.
+         * @param offset Offset before this IFD block.
+         * @param next Offset of the next IFD block (if exist).
+         * @return
+         *
+         */
         public function toBytes(endian:String = null, offset:uint = 0, next:uint = 0):ByteArray
         {
             var bytes:ByteArray = new ByteArray();
@@ -85,7 +85,7 @@ package zino.file
                             var bt:ByteArray = new ByteArray();
                             bt.endian = bytes.endian;
                             bt.writeUTFBytes(it.value);
-                            fillWithBlank(bt, it.length);
+                            fillWithBlank(bt, it.length, 0x20);
                             bytes.writeBytes(bt);
                             break;
                         default:
@@ -129,7 +129,8 @@ package zino.file
                         if (typeof(it.value) == "string")
                         {
                             bv.writeUTFBytes(it.value);
-                            fillWithBlank(bv, it.length);
+                            fillWithBlank(bv, it.length - 1, 0x20);
+                            bv.writeByte(0);
                         }
                         break;
                     default:

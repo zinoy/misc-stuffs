@@ -13,27 +13,27 @@
             protected function btnOpen_clickHandler(event:MouseEvent):void
             {
                 var ifdl:IFDList = new IFDList();
-                ifdl.push(new IFDObject(0xfe, IFDType.LONG, 0, 1));
-                ifdl.push(new IFDObject(0x100, IFDType.SHORT, 120, 1));
-                ifdl.push(new IFDObject(0x101, IFDType.SHORT, 100, 1));
-                ifdl.push(new IFDObject(0x102, IFDType.SHORT, 0x000800080008, 3));
+                ifdl.push(new IFDObject(0xfe, IFDType.LONG, 1, 0));
+                ifdl.push(new IFDObject(0x100, IFDType.SHORT, 1, 120));
+                ifdl.push(new IFDObject(0x101, IFDType.SHORT, 1, 100));
+                ifdl.push(new IFDObject(0x102, IFDType.SHORT, 3, 0x000800080008));
                 ifdl.push(new IFDObject(0x103, IFDType.SHORT, 1, 1));
-                ifdl.push(new IFDObject(0x106, IFDType.SHORT, 2, 1));
+                ifdl.push(new IFDObject(0x106, IFDType.SHORT, 1, 2));
                 ifdl.push(new IFDObject(0x10f, IFDType.ASCII, "Canon"));
                 ifdl.push(new IFDObject(0x110, IFDType.ASCII, "Canon EOS 7D"));
-                ifdl.push(new IFDObject(0x111, IFDType.SHORT, 0, 1));
-                ifdl.push(new IFDObject(0x115, IFDType.SHORT, 3, 1));
-                ifdl.push(new IFDObject(0x116, IFDType.SHORT, 100, 1));
-                ifdl.push(new IFDObject(0x117, IFDType.SHORT, 0, 1));
-                ifdl.push(new IFDObject(0x11a, IFDType.RATIONAL, [0x8f08125a, 1], 1));
-                ifdl.push(new IFDObject(0x11b, IFDType.RATIONAL, [72, 1], 1));
-                ifdl.push(new IFDObject(0x128, IFDType.SHORT, 2, 1));
+                ifdl.push(new IFDObject(0x111, IFDType.SHORT, 1, 0));
+                ifdl.push(new IFDObject(0x115, IFDType.SHORT, 1, 3));
+                ifdl.push(new IFDObject(0x116, IFDType.SHORT, 1, 100));
+                ifdl.push(new IFDObject(0x117, IFDType.SHORT, 1, 0));
+                ifdl.push(new IFDObject(0x11a, IFDType.RATIONAL, 1, [0x8f08125a, 1]));
+                ifdl.push(new IFDObject(0x11b, IFDType.RATIONAL, 1, [72, 1]));
+                ifdl.push(new IFDObject(0x128, IFDType.SHORT, 1, 2));
 
                 var ifdl2:IFDList = new IFDList();
                 ifdl2.push(new IFDObject(0x9000, IFDType.UNDEFINED, "0221"));
                 var tiff:TiffFormat = new TiffFormat(Endian.LITTLE_ENDIAN);
                 tiff.addIFD(ifdl);
-				tiff.addIFD(ifdl2);
+                tiff.addIFD(ifdl2);
                 tiff.save();
             }
         ]]>

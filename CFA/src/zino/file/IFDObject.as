@@ -9,12 +9,27 @@ package zino.file
         private var _value:*;
         private var _offset:Boolean = false;
 
-        public function IFDObject(tag:uint = 0, type:uint = 0, value:* = null, count:uint = 0)
+		/**
+		 * Initialling a new IFDObject instance.
+		 * @param tag Tag ID.
+		 * @param type Tag's type.
+		 * @param args Count(optional) and Value.
+		 * 
+		 */
+        public function IFDObject(tag:uint = 0, type:uint = 0, ... args)
         {
             _tag = tag;
             _type = type;
-            _count = count;
-            this.value = value;
+            if (args.length == 1)
+            {
+                _count = 0;
+                this.value = args[0];
+            }
+            else
+            {
+                _count = args[0];
+                _value = args[1];
+            }
             if (this.length > 4)
             {
                 _offset = true;
