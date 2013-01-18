@@ -13,6 +13,11 @@ package zino.file
             _list = new Vector.<IFDObject>();
         }
 
+        /**
+         * Get the byte(8-bit) length of binary format;
+         * @return
+         *
+         */
         public function get bytesLength():uint
         {
             var len:uint = 0;
@@ -27,9 +32,37 @@ package zino.file
             return len + 6;
         }
 
+        /**
+         * Add an item to list.
+         * @param item Item to be added.
+         * @return The new length of the list.
+         *
+         */
         public function push(item:IFDObject):uint
         {
             return _list.push(item);
+        }
+
+        /**
+         * Create an IFDObject and add it to list.
+         * @param tag Tag ID.
+         * @param type Tag's type.
+         * @param args Count(optional) and Value.
+         * @return The new length of the list.
+         *
+         */
+        public function addTag(tag:uint = 0, type:uint = 0, ... args):uint
+        {
+            var obj:IFDObject;
+            if (args.length == 1)
+            {
+                obj = new IFDObject(tag, type, args[0]);
+            }
+            else
+            {
+                obj = new IFDObject(tag, type, args[0], args[1]);
+            }
+            return _list.push(obj);
         }
 
         public function findTag(tag:uint):IFDObject
@@ -45,7 +78,7 @@ package zino.file
         }
 
         /**
-         * Get binary to write to file.
+         * Get binary format to write to file.
          * @param endian Changes or reads the byte order for the data; either Endian.BIG_ENDIAN or Endian.LITTLE_ENDIAN.
          * @param offset Offset before this IFD block.
          * @param next Offset of the next IFD block (if exist).
