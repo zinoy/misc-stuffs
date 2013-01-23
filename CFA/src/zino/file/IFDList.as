@@ -7,6 +7,7 @@ package zino.file
     public class IFDList
     {
         private var _list:Vector.<IFDObject>;
+        private var _endian:String;
 
         public function IFDList()
         {
@@ -78,11 +79,11 @@ package zino.file
         }
 
         /**
-         * Get binary format to write to file.
+         * Get binary data.
          * @param endian Changes or reads the byte order for the data; either Endian.BIG_ENDIAN or Endian.LITTLE_ENDIAN.
          * @param offset Offset before this IFD block.
          * @param next Offset of the next IFD block (if exist).
-         * @return
+         * @return ByteArray data.
          *
          */
         public function toBytes(endian:String = null, offset:uint = 0, next:uint = 0):ByteArray
@@ -90,7 +91,7 @@ package zino.file
             var bytes:ByteArray = new ByteArray();
             if (endian)
             {
-                bytes.endian = endian;
+                bytes.endian = _endian = endian;
             }
             var values:Vector.<IFDObject> = new Vector.<IFDObject>();
             var lens:Array = [];
@@ -112,18 +113,25 @@ package zino.file
                 }
                 else
                 {
-                    switch (typeof(it.value))
+                    if (typeof(it.value) == "string")
                     {
-                        case "string":
-                            var bt:ByteArray = new ByteArray();
-                            bt.endian = bytes.endian;
-                            bt.writeUTFBytes(it.value);
-                            fillWithBlank(bt, it.length, 0x20);
-                            bytes.writeBytes(bt);
-                            break;
-                        default:
+
+                        var bt:ByteArray = new ByteArray();
+                        bt.endian = bytes.endian;
+                        bt.writeUTFBytes(it.value);
+                        fillWithBlank(bt, it.length, 0x20);
+                        bytes.writeBytes(bt);
+                    }
+                    else
+                    {
+                        if (it.count > 1)
+                        {
+                            bytes.writeBytes(getBinaryValue(it));
+                        }
+                        else
+                        {
                             bytes.writeUnsignedInt(it.value);
-                            break;
+                        }
                     }
                 }
             }
@@ -131,53 +139,56 @@ package zino.file
 
             for each (it in values)
             {
-                var bv:ByteArray = new ByteArray();
-                bv.endian = bytes.endian;
-                var i:int, off:uint;
-                switch (it.type)
-                {
-                    case IFDType.ASCII:
-                        bv.writeUTFBytes(it.value);
-                        fillWithBlank(bv, it.length);
-                        break;
-                    case IFDType.SHORT:
-                        for (i = it.count - 1; i >= 0; i--)
-                        {
-                            off = IFDType.OFFSETS[it.type] * i * 8;
-                            bv.writeShort(it.value >> off);
-                        }
-                        break;
-                    case IFDType.LONG:
-                        for (i = it.count - 1; i >= 0; i--)
-                        {
-                            off = IFDType.OFFSETS[it.type] * i * 8;
-                            bv.writeUnsignedInt(it.value >> off);
-                        }
-                        break;
-                    case IFDType.RATIONAL:
-                        bv.writeUnsignedInt(it.value[0]);
-                        bv.writeUnsignedInt(it.value[1]);
-                        break;
-                    case IFDType.UNDEFINED:
-                        if (typeof(it.value) == "string")
-                        {
-                            bv.writeUTFBytes(it.value);
-                            fillWithBlank(bv, it.length - 1, 0x20);
-                            bv.writeByte(0);
-                        }
-                        break;
-                    default:
-                        for (i = it.count - 1; i >= 0; i--)
-                        {
-                            off = IFDType.OFFSETS[it.type] * i * 8;
-                            bv.writeByte(it.value >> off);
-                        }
-                        break;
-                }
-                bytes.writeBytes(bv);
+                bytes.writeBytes(getBinaryValue(it));
             }
 
             return bytes;
+        }
+
+        private function getBinaryValue(obj:IFDObject):ByteArray
+        {
+            var bv:ByteArray = new ByteArray();
+            bv.endian = _endian;
+            var i:int, off:uint;
+            switch (obj.type)
+            {
+                case IFDType.ASCII:
+                    bv.writeUTFBytes(obj.value);
+                    fillWithBlank(bv, obj.length);
+                    break;
+                case IFDType.SHORT:
+                    for (i = 0; i < obj.count; i++)
+                    {
+                        //off = IFDType.OFFSETS[obj.type] * i * 8;
+                        bv.writeShort(obj.value[i]);
+                    }
+                    break;
+                case IFDType.LONG:
+                    for (i = 0; i < obj.count; i++)
+                    {
+                        bv.writeUnsignedInt(obj.value[i]);
+                    }
+                    break;
+                case IFDType.RATIONAL:
+                    bv.writeUnsignedInt(obj.value[0]);
+                    bv.writeUnsignedInt(obj.value[1]);
+                    break;
+                case IFDType.UNDEFINED:
+                    if (typeof(obj.value) == "string")
+                    {
+                        bv.writeUTFBytes(obj.value);
+                        fillWithBlank(bv, obj.length - 1, 0x20);
+                        bv.writeByte(0);
+                    }
+                    break;
+                default:
+                    for (i = 0; i < obj.count; i++)
+                    {
+                        bv.writeByte(obj.value[i]);
+                    }
+                    break;
+            }
+            return bv;
         }
 
         private function fillWithBlank(bytes:ByteArray, length:uint, blank:int = 0):void

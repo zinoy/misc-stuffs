@@ -1,11 +1,15 @@
 package zino.file
 {
     import com.hurlant.util.Hex;
-
+    
+    import flash.events.Event;
+    import flash.filesystem.*;
     import flash.utils.ByteArray;
 
     public final class TiffFormat extends FileFormatBase implements IFileFormat
     {
+        private var data:ByteArray;
+
         public function TiffFormat(endian:String = null)
         {
             super(endian);
@@ -13,7 +17,7 @@ package zino.file
             ifdl.addTag(0xfe, IFDType.LONG, 1, 0);
             ifdl.addTag(0x100, IFDType.SHORT, 1, 120);
             ifdl.addTag(0x101, IFDType.SHORT, 1, 100);
-            ifdl.addTag(0x102, IFDType.SHORT, 3, 0x000800080008);
+            ifdl.addTag(0x102, IFDType.SHORT, 3, [8, 8, 8]);
             ifdl.addTag(0x103, IFDType.SHORT, 1, 1);
             ifdl.addTag(0x106, IFDType.SHORT, 1, 2);
             ifdl.addTag(0x10f, IFDType.ASCII, "Canon");
@@ -22,10 +26,12 @@ package zino.file
             ifdl.addTag(0x115, IFDType.SHORT, 1, 3);
             ifdl.addTag(0x116, IFDType.SHORT, 1, 100);
             ifdl.addTag(0x117, IFDType.SHORT, 1, 0);
-            ifdl.addTag(0x11a, IFDType.RATIONAL, 1, [0x8f08125a, 1]);
+            ifdl.addTag(0x11a, IFDType.RATIONAL, 1, [72, 1]);
             ifdl.addTag(0x11b, IFDType.RATIONAL, 1, [72, 1]);
             ifdl.addTag(0x128, IFDType.SHORT, 1, 2);
             _ifds.push(ifdl);
+            data = new ByteArray();
+            data.endian = endian;
         }
 
         public function save():void
@@ -45,8 +51,6 @@ package zino.file
                 tl += list.bytesLength;
             }
             _ifds[0].findTag(0x111).value = _data.length + tl;
-            var data:ByteArray = new ByteArray();
-            data.endian = _data.endian;
             data.writeBytes(_data);
             for (var i:uint = 0; i < _ifds.length; i++)
             {
@@ -58,11 +62,22 @@ package zino.file
                 }
                 data.writeBytes(obj.toBytes(data.endian, data.length, next));
             }
-            for each (var img:ByteArray in _images)
+            for each (var img:ByteArray in _imgData)
             {
                 data.writeBytes(img);
             }
-            trace(Hex.fromArray(data));
+            var file:File = new File();
+            file.addEventListener(Event.SELECT, writeFile);
+            file.browseForSave("Save to");
+        }
+
+        private function writeFile(e:Event):void
+        {
+			var file:File = File(e.target);
+            var stm:FileStream = new FileStream();
+            stm.open(file, FileMode.WRITE);
+            stm.writeBytes(data);
+            stm.close();
             data.clear();
         }
 

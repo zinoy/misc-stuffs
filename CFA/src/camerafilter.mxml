@@ -1,27 +1,19 @@
 <?xml version="1.0" encoding="utf-8"?>
-<s:WindowedApplication xmlns:fx="http://ns.adobe.com/mxml/2009" xmlns:s="library://ns.adobe.com/flex/spark" xmlns:mx="library://ns.adobe.com/flex/mx" showStatusBar="false">
+<s:WindowedApplication xmlns:fx="http://ns.adobe.com/mxml/2009" xmlns:s="library://ns.adobe.com/flex/spark" xmlns:mx="library://ns.adobe.com/flex/mx" showStatusBar="false"
+                       applicationComplete="showControl(null);">
     <fx:Declarations>
         <!-- 将非可视元素（例如服务、值对象）放在此处 -->
     </fx:Declarations>
     <fx:Script>
         <![CDATA[
-            import com.hurlant.util.Hex;
+            import mx.managers.PopUpManager;
+            import spark.components.TitleWindow;
 
-            import zino.file.*;
-			import mx.managers.PopUpManager
-
-
-            protected function btnOpen_clickHandler(event:MouseEvent):void
+            private function showControl(e:MouseEvent):void
             {
-                var ifdl:IFDList = new IFDList();
-                ifdl.push(new IFDObject(0x9000, IFDType.UNDEFINED, "0221"));
-                var tiff:TiffFormat = new TiffFormat(Endian.LITTLE_ENDIAN);
-                tiff.addIFD(ifdl);
-                tiff.save();
+                var cp:TitleWindow = PopUpManager.createPopUp(this, ControlPanel) as TitleWindow;
+                PopUpManager.centerPopUp(cp);
             }
         ]]>
     </fx:Script>
-    <s:TitleWindow width="250" height="200" title="Toolbox" left="10" top="10" id="controls">
-        <s:Button label="Open..." height="21" y="10" x="11" id="btnOpen" click="btnOpen_clickHandler(event)"/>
-    </s:TitleWindow>
 </s:WindowedApplication>
