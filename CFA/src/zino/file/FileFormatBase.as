@@ -13,6 +13,8 @@ package zino.file
         protected var _data:ByteArray;
         protected var _imgData:Vector.<ByteArray>;
         protected var _ifds:Vector.<IFDList>;
+        protected var _exif:IFDList;
+        protected var _exifPos:uint = 0;
         protected var _images:Array;
 
         public function FileFormatBase(endian:String = null)
@@ -38,9 +40,29 @@ package zino.file
             _data.writeUnsignedInt(0x8);
         }
 
+        public function get exifPosition():uint
+        {
+            return _exifPos;
+        }
+
+        public function set exifPosition(value:uint):void
+        {
+            _exifPos = value;
+        }
+
         public function get endian():String
         {
             return _data.endian;
+        }
+
+        public function get exif():IFDList
+        {
+            return _exif;
+        }
+
+        public function set exif(value:IFDList):void
+        {
+            _exif = value;
         }
 
         public function addIFD(ifd:IFDList):void
@@ -49,7 +71,7 @@ package zino.file
             {
                 ifd.findTag(0x100).value = _images[0].width;
                 ifd.findTag(0x101).value = _images[0].height;
-				ifd.findTag(0x116).value = _images[0].height;
+                ifd.findTag(0x116).value = _images[0].height;
                 var len:uint = 0;
                 for each (var b:ByteArray in _imgData)
                 {
@@ -95,5 +117,6 @@ package zino.file
                 _ifds[0].findTag(0x117).value = len + d.length;
             }
         }
+
     }
 }

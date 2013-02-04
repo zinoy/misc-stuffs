@@ -1,7 +1,7 @@
 package zino.file
 {
     import com.hurlant.util.Hex;
-    
+
     import flash.events.Event;
     import flash.filesystem.*;
     import flash.utils.ByteArray;
@@ -29,6 +29,7 @@ package zino.file
             ifdl.addTag(0x11a, IFDType.RATIONAL, 1, [72, 1]);
             ifdl.addTag(0x11b, IFDType.RATIONAL, 1, [72, 1]);
             ifdl.addTag(0x128, IFDType.SHORT, 1, 2);
+            ifdl.addTag(0x8769, IFDType.SHORT, 1, 2);
             _ifds.push(ifdl);
             data = new ByteArray();
             data.endian = endian;
@@ -45,13 +46,32 @@ package zino.file
             {
                 throw new VerifyError("Invaild IFD data.");
             }
+            //calculate offsets
             var tl:uint = 0;
             for each (var list:IFDList in _ifds)
             {
                 tl += list.bytesLength;
             }
-            _ifds[0].findTag(0x111).value = _data.length + tl;
+            var il:uint = 0;
+            for each (var imgdata:ByteArray in _imgData)
+            {
+                il += imgdata.length;
+            }
+            if (_exif)
+            {
+                if (_exifPos == ExifPosition.AFTER_IMAGE_DATA)
+                {
+                    _ifds[0].findTag(0x8769, true, IFDType.LONG).value = _data.length + tl + il;
+                    _ifds[0].findTag(0x111).value = _data.length + tl;
+                }
+                else
+                {
+                    _ifds[0].findTag(0x8769, true, IFDType.LONG).value = _data.length + tl;
+                    _ifds[0].findTag(0x111).value = _data.length + tl + _exif.bytesLength;
+                }
+            }
             data.writeBytes(_data);
+
             for (var i:uint = 0; i < _ifds.length; i++)
             {
                 var obj:IFDList = _ifds[i];
@@ -62,10 +82,22 @@ package zino.file
                 }
                 data.writeBytes(obj.toBytes(data.endian, data.length, next));
             }
+            //write EXIF data
+            if (_exif && _exifPos != ExifPosition.AFTER_IMAGE_DATA)
+            {
+                data.writeBytes(_exif.toBytes(data.endian, data.length));
+            }
+
             for each (var img:ByteArray in _imgData)
             {
                 data.writeBytes(img);
             }
+            //write EXIF data
+            if (_exif && _exifPos == ExifPosition.AFTER_IMAGE_DATA)
+            {
+                data.writeBytes(_exif.toBytes(data.endian, data.length));
+            }
+
             var file:File = new File();
             file.addEventListener(Event.SELECT, writeFile);
             file.browseForSave("Save to");
@@ -73,7 +105,7 @@ package zino.file
 
         private function writeFile(e:Event):void
         {
-			var file:File = File(e.target);
+            var file:File = File(e.target);
             var stm:FileStream = new FileStream();
             stm.open(file, FileMode.WRITE);
             stm.writeBytes(data);

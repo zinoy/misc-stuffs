@@ -66,7 +66,7 @@ package zino.file
             return _list.push(obj);
         }
 
-        public function findTag(tag:uint):IFDObject
+        public function findTag(tag:uint, create:Boolean = false, type:uint = 7, count:uint = 1):IFDObject
         {
             for each (var it:IFDObject in _list)
             {
@@ -74,6 +74,12 @@ package zino.file
                 {
                     return it;
                 }
+            }
+            if (create)
+            {
+                var obj:IFDObject = new IFDObject(tag, type, count, 0);
+                _list.push(obj);
+                return obj;
             }
             return null;
         }

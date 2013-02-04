@@ -2,11 +2,11 @@
 <s:WindowedApplication xmlns:fx="http://ns.adobe.com/mxml/2009" xmlns:s="library://ns.adobe.com/flex/spark" xmlns:mx="library://ns.adobe.com/flex/mx" showStatusBar="false"
                        applicationComplete="showControl(null);">
     <fx:Declarations>
-        <!-- 将非可视元素（例如服务、值对象）放在此处 -->
     </fx:Declarations>
     <fx:Script>
         <![CDATA[
             import mx.managers.PopUpManager;
+            
             import spark.components.TitleWindow;
 
             private function showControl(e:MouseEvent):void
@@ -16,4 +16,8 @@
             }
         ]]>
     </fx:Script>
+	<mx:ViewStack id="vstk">
+		<s:NavigatorContent label="baba" width="100%" height="100%">
+		</s:NavigatorContent>
+	</mx:ViewStack>
 </s:WindowedApplication>
